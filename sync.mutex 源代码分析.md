@@ -1,3 +1,4 @@
++ https://colobu.com/2018/12/18/dive-into-sync-mutex/
 + sync.Mutex是Go标准库中常用的一个排外锁。当一个goroutine获得了这个锁的拥有权之后，其他请求锁的goroutine就会阻塞在Lock方法的调用上，直到锁被释放。
 
 #### 初版的Mutex
@@ -44,3 +45,14 @@ func (m *Mutex) Unlock() {
 + 当一个goroutine获取这个锁的时候， 有可能这个锁根本没有竞争者， 那么这个goroutine轻轻松松获取了这个锁。
 + 而如果这个锁已经被别的goroutine拥有， 就需要考虑怎么处理当前的期望获取锁的goroutine。
 + 同时， 当并发goroutine很多的时候，有可能会有多个竞争者， 而且还会有通过信号量唤醒的等待者。
+
++ sync.Mutex结构
+```go
+type Mutex struct {
+	key  int32  //一个共用字段，第0个bit标记这个mutex是否被某个goroutine所拥有，0: 未被锁
+	sema int32  //第一个bit标记这个mutex是否已唤，也就是有某个唤醒的goroutine要尝试获取锁；第2个bit标记这个mutex状态，1:表明此锁处于饥饿状态
+}
+```
++ 尝试获取锁的goroutine也有状态，它可能是新来的goroutine，也可能是被唤醒的goroutine，可能是处于正常状态的goroutine，也可能是处于饥饿状态的goroutine。
+
+### Lock
